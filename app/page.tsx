@@ -158,9 +158,42 @@ export default function EmojiGenerator() {
   };
 
   const handleAcceptSuggestion = async () => {
-    if (suggestion) {
-      setPrompt(suggestion.animal);
-      handleGenerate();
+    if (suggestion && suggestion.imageUrl) {
+      setIsLoading(true);
+      try {
+        // Save using the exact schema that FastAPI expects
+        const saveResponse = await fetch(`${API_BASE_URL}/images`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            id: crypto.randomUUID(), // Generate a unique ID
+            prompt: suggestion.animal,
+            url: suggestion.imageUrl,
+            likes: 0,
+            created_at: new Date().toISOString(),
+            is_suggested: true,
+            suggested_animal: suggestion.animal,
+            original_input: prompt
+          })
+        });
+
+        if (!saveResponse.ok) {
+          const errorData = await saveResponse.json().catch(() => ({}));
+          throw new Error(errorData.detail || 'Failed to save image');
+        }
+
+        await fetchImages();
+        setPrompt('');
+        setSuggestion(null);
+      } catch (error) {
+        console.error('Error:', error);
+        alert(error instanceof Error ? error.message : 'An error occurred');
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
