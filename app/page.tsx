@@ -118,16 +118,12 @@ export default function EmojiGenerator() {
 
   const handleLike = async (imageId: string) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/images/like`, {
+      const response = await fetch(`${API_BASE_URL}/images/${imageId}/like`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          image_id: imageId,
-          action: 'like'
-        })
+        }
       });
 
       if (!response.ok) {

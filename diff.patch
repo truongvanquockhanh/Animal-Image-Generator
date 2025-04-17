@@ -1,0 +1,303 @@
+diff --git a/app/page.tsx b/app/page.tsx
+index 1483f0e..ca86cbd 100644
+--- a/app/page.tsx
++++ b/app/page.tsx
+@@ -17,6 +17,11 @@ interface Image {
+   created_at: string;
+ }
+ 
++interface Suggestion {
++  animal: string;
++  imageUrl: string | null;
++}
++
+ const AVAILABLE_ANIMALS = [
+   "dog", "cat", "lion", "tiger", "elephant", "penguin", "panda", 
+   "koala", "giraffe", "dolphin", "fox", "wolf", "rabbit", "cow", 
+@@ -32,6 +37,7 @@ export default function EmojiGenerator() {
+   const [images, setImages] = useState<Image[]>([]);
+   const [isLoading, setIsLoading] = useState(false);
+   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
++  const [suggestion, setSuggestion] = useState<Suggestion | null>(null);
+   const { token, logout } = useAuth();
+ 
+   useEffect(() => {
+@@ -53,12 +59,49 @@ export default function EmojiGenerator() {
+     }
+   };
+ 
++  const generateSuggestion = () => {
++    // Get a random animal from the available list
++    const randomIndex = Math.floor(Math.random() * AVAILABLE_ANIMALS.length);
++    const suggestedAnimal = AVAILABLE_ANIMALS[randomIndex];
++    return suggestedAnimal;
++  };
++
+   const handleGenerate = async () => {
+     if (!prompt.trim()) return;
+     
+     const normalizedPrompt = prompt.trim().toLowerCase();
+     if (!AVAILABLE_ANIMALS.includes(normalizedPrompt)) {
+-      alert('Please enter a valid animal name from the available list.');
++      const suggestedAnimal = generateSuggestion();
++      setIsLoading(true);
++      try {
++        // Generate a preview image for the suggestion
++        const response = await fetch(`${API_BASE_URL}/images/generate`, {
++          method: 'POST',
++          headers: {
++            'Content-Type': 'application/json',
++            'Authorization': `Bearer ${token}`
++          },
++          body: JSON.stringify({ prompt: suggestedAnimal })
++        });
++
++        if (!response.ok) {
++          throw new Error('Failed to generate suggestion image');
++        }
++
++        const data = await response.json();
++        setSuggestion({
++          animal: suggestedAnimal,
++          imageUrl: data.url
++        });
++      } catch (error) {
++        console.error('Error generating suggestion:', error);
++        setSuggestion({
++          animal: suggestedAnimal,
++          imageUrl: null
++        });
++      } finally {
++        setIsLoading(false);
++      }
+       return;
+     }
+ 
+@@ -81,7 +124,7 @@ export default function EmojiGenerator() {
+ 
+       const data = await response.json();
+       
+-      // Save the image
++      // Save the image with corrected structure
+       const saveResponse = await fetch(`${API_BASE_URL}/images`, {
+         method: 'POST',
+         headers: {
+@@ -89,14 +132,10 @@ export default function EmojiGenerator() {
+           'Authorization': `Bearer ${token}`
+         },
+         body: JSON.stringify({
+-          id: data.id,
+           prompt: data.prompt,
+-          url: data.url,
++          image_url: data.url,  // Changed from url to image_url
+           likes: 0,
+-          created_at: new Date().toISOString(),
+-          is_suggested: false,
+-          suggested_animal: null,
+-          original_input: prompt
++          created_at: new Date().toISOString()
+         })
+       });
+ 
+@@ -105,9 +144,9 @@ export default function EmojiGenerator() {
+         throw new Error(errorData.detail || 'Failed to save image');
+       }
+ 
+-      const savedData = await saveResponse.json();
+       await fetchImages();
+       setPrompt('');
++      setSuggestion(null);
+     } catch (error) {
+       console.error('Error:', error);
+       alert(error instanceof Error ? error.message : 'An error occurred');
+@@ -116,6 +155,47 @@ export default function EmojiGenerator() {
+     }
+   };
+ 
++  const handleAcceptSuggestion = async () => {
++    if (suggestion && suggestion.imageUrl) {
++      setIsLoading(true);
++      try {
++        // Save the suggested image to the collection
++        const saveResponse = await fetch(`${API_BASE_URL}/images`, {
++          method: 'POST',
++          headers: {
++            'Content-Type': 'application/json',
++            'Authorization': `Bearer ${token}`
++          },
++          body: JSON.stringify({
++            prompt: suggestion.animal,
++            image_url: suggestion.imageUrl,  // Changed from url to image_url
++            likes: 0,
++            created_at: new Date().toISOString()
++          })
++        });
++
++        if (!saveResponse.ok) {
++          const errorData = await saveResponse.json().catch(() => ({}));
++          throw new Error(errorData.detail || 'Failed to save suggested image');
++        }
++
++        await fetchImages();
++        setPrompt('');
++        setSuggestion(null);
++      } catch (error) {
++        console.error('Error saving suggestion:', error);
++        alert(error instanceof Error ? error.message : 'Failed to save suggested image');
++      } finally {
++        setIsLoading(false);
++      }
++    }
++  };
++
++  const handleRejectSuggestion = () => {
++    setSuggestion(null);
++    setPrompt('');
++  };
++
+   const handleLike = async (imageId: string) => {
+     try {
+       const response = await fetch(`${API_BASE_URL}/images/like`, {
+@@ -146,6 +226,26 @@ export default function EmojiGenerator() {
+     window.open(url, '_blank');
+   };
+ 
++  const handleDelete = async (imageId: string) => {
++    try {
++      const response = await fetch(`${API_BASE_URL}/images/${imageId}`, {
++        method: 'DELETE',
++        headers: {
++          'Authorization': `Bearer ${token}`
++        }
++      });
++
++      if (!response.ok) {
++        throw new Error('Failed to delete image');
++      }
++
++      await fetchImages();
++    } catch (error) {
++      console.error('Error deleting image:', error);
++      alert(error instanceof Error ? error.message : 'Failed to delete image');
++    }
++  };
++
+   return (
+     <div className="container mx-auto p-4">
+       <div className="flex justify-between items-center mb-6">
+@@ -176,6 +276,31 @@ export default function EmojiGenerator() {
+           </Button>
+         </div>
+ 
++        {suggestion && (
++          <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
++            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
++              No animal matches your search. How about a cute {suggestion.animal} instead?
++            </p>
++            {suggestion.imageUrl && (
++              <div className="mb-4">
++                <img 
++                  src={suggestion.imageUrl} 
++                  alt={suggestion.animal}
++                  className="w-48 h-48 object-cover rounded-lg mx-auto"
++                />
++              </div>
++            )}
++            <div className="flex justify-center gap-4">
++              <Button onClick={handleAcceptSuggestion} variant="default">
++                Use this animal
++              </Button>
++              <Button onClick={handleRejectSuggestion} variant="outline">
++                No, thanks
++              </Button>
++            </div>
++          </div>
++        )}
++
+         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 justify-items-center">
+           {images.map((image) => (
+             <ImageCard
+@@ -186,6 +311,7 @@ export default function EmojiGenerator() {
+               likes={image.likes}
+               onLike={handleLike}
+               onDownload={handleDownload}
++              onDelete={handleDelete}
+             />
+           ))}
+         </div>
+diff --git a/components/image-card.tsx b/components/image-card.tsx
+index dfb726b..5322206 100644
+--- a/components/image-card.tsx
++++ b/components/image-card.tsx
+@@ -1,5 +1,5 @@
+ import { useState } from 'react';
+-import { Heart, Download, Info } from 'lucide-react';
++import { Heart, Download, Info, Trash2 } from 'lucide-react';
+ 
+ interface ImageCardProps {
+   id: string;
+@@ -8,6 +8,7 @@ interface ImageCardProps {
+   likes: number;
+   onLike: (id: string) => Promise<number>;
+   onDownload: (url: string) => void;
++  onDelete: (id: string) => Promise<void>;
+ }
+ 
+ export function ImageCard({
+@@ -17,8 +18,10 @@ export function ImageCard({
+   likes,
+   onLike,
+   onDownload,
++  onDelete,
+ }: ImageCardProps) {
+   const [isLiking, setIsLiking] = useState(false);
++  const [isDeleting, setIsDeleting] = useState(false);
+   const [currentLikes, setCurrentLikes] = useState(likes);
+   const [isHovered, setIsHovered] = useState(false);
+   const [showDescription, setShowDescription] = useState(false);
+@@ -39,6 +42,21 @@ export function ImageCard({
+     }
+   };
+ 
++  const handleDelete = async () => {
++    if (isDeleting) return;
++    if (!confirm('Are you sure you want to delete this image?')) return;
++    
++    setIsDeleting(true);
++    setError(null);
++    try {
++      await onDelete(id);
++    } catch (err) {
++      console.error('Error deleting image:', err);
++      setError('Failed to delete image');
++      setIsDeleting(false);
++    }
++  };
++
+   const capitalizeFirstLetter = (string: string) => {
+     return string.charAt(0).toUpperCase() + string.slice(1);
+   };
+@@ -47,6 +65,10 @@ export function ImageCard({
+     return `This is a beautiful ${prompt.toLowerCase()} image. The image showcases the unique characteristics and natural beauty of this amazing creature. It has received ${currentLikes} likes from our community.`;
+   };
+ 
++  if (isDeleting) {
++    return null;
++  }
++
+   return (
+     <div 
+       className="bg-card rounded-lg shadow-lg overflow-hidden w-64 hover:shadow-xl transition-shadow duration-300"
+@@ -76,6 +98,12 @@ export function ImageCard({
+             >
+               <Download className="h-5 w-5" />
+             </button>
++            <button
++              onClick={handleDelete}
++              className="p-2 rounded-full bg-red-500/60 backdrop-blur-sm hover:bg-red-500/80 transition-colors text-white"
++            >
++              <Trash2 className="h-5 w-5" />
++            </button>
+           </div>
+         )}
+       </div>
