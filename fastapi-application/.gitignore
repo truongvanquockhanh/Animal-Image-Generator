@@ -1,0 +1,55 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+.env
+*.env
+*.venv
+pip-log.txt
+pip-delete-this-directory.txt
+
+# FastAPI & Uvicorn logs
+logs/
+*.log
+*.sqlite3
+
+# Pytest / Testing
+.coverage
+htmlcov/
+.tox/
+.nox/
+.cache/
+.pytest_cache/
+
+# IDE / Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-project
+*.sublime-workspace
+
+# SQLAlchemy / Alembic migrations cache
+migrations/versions/*.pyc
+migrations/versions/*.pyo
+migrations/versions/__pycache__/
+
+# PostgreSQL Data
+pgdata/
+*.pgsql
+*.dump
+*.sql
+
+# Docker
+*.dockerignore
+docker-compose.override.yml
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+
+# Other unnecessary files
+.DS_Store
+Thumbs.db
