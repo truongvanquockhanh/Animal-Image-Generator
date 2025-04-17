@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Heart, Download, Info } from 'lucide-react';
+import { Heart, Download, Info, Trash2 } from 'lucide-react';
 
 interface ImageCardProps {
   id: string;
@@ -8,6 +8,7 @@ interface ImageCardProps {
   likes: number;
   onLike: (id: string) => Promise<number>;
   onDownload: (url: string) => void;
+  onDelete: (id: string) => Promise<void>;
 }
 
 export function ImageCard({
@@ -17,8 +18,10 @@ export function ImageCard({
   likes,
   onLike,
   onDownload,
+  onDelete,
 }: ImageCardProps) {
   const [isLiking, setIsLiking] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [currentLikes, setCurrentLikes] = useState(likes);
   const [isHovered, setIsHovered] = useState(false);
   const [showDescription, setShowDescription] = useState(false);
@@ -39,6 +42,21 @@ export function ImageCard({
     }
   };
 
+  const handleDelete = async () => {
+    if (isDeleting) return;
+    if (!confirm('Are you sure you want to delete this image?')) return;
+    
+    setIsDeleting(true);
+    setError(null);
+    try {
+      await onDelete(id);
+    } catch (err) {
+      console.error('Error deleting image:', err);
+      setError('Failed to delete image');
+      setIsDeleting(false);
+    }
+  };
+
   const capitalizeFirstLetter = (string: string) => {
     return string.charAt(0).toUpperCase() + string.slice(1);
   };
@@ -46,6 +64,10 @@ export function ImageCard({
   const generateDescription = (prompt: string) => {
     return `This is a beautiful ${prompt.toLowerCase()} image. The image showcases the unique characteristics and natural beauty of this amazing creature. It has received ${currentLikes} likes from our community.`;
   };
+
+  if (isDeleting) {
+    return null;
+  }
 
   return (
     <div 
@@ -75,6 +97,12 @@ export function ImageCard({
               className="p-2 rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-colors text-white"
             >
               <Download className="h-5 w-5" />
+            </button>
+            <button
+              onClick={handleDelete}
+              className="p-2 rounded-full bg-red-500/60 backdrop-blur-sm hover:bg-red-500/80 transition-colors text-white"
+            >
+              <Trash2 className="h-5 w-5" />
             </button>
           </div>
         )}

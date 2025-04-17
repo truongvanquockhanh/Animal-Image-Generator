@@ -146,6 +146,27 @@ export default function EmojiGenerator() {
     window.open(url, '_blank');
   };
 
+  const handleDelete = async (imageId: string) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/images/${imageId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete image');
+      }
+
+      // Refresh the images list after successful deletion
+      await fetchImages();
+    } catch (error) {
+      console.error('Error deleting image:', error);
+      alert(error instanceof Error ? error.message : 'Failed to delete image');
+    }
+  };
+
   return (
     <div className="container mx-auto p-4">
       <div className="flex justify-between items-center mb-6">
@@ -186,6 +207,7 @@ export default function EmojiGenerator() {
               likes={image.likes}
               onLike={handleLike}
               onDownload={handleDownload}
+              onDelete={handleDelete}
             />
           ))}
         </div>
