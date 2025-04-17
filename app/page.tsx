@@ -17,6 +17,11 @@ interface Image {
   created_at: string;
 }
 
+interface Suggestion {
+  animal: string;
+  imageUrl: string | null;
+}
+
 const AVAILABLE_ANIMALS = [
   "dog", "cat", "lion", "tiger", "elephant", "penguin", "panda", 
   "koala", "giraffe", "dolphin", "fox", "wolf", "rabbit", "cow", 
@@ -32,6 +37,7 @@ export default function EmojiGenerator() {
   const [images, setImages] = useState<Image[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [suggestion, setSuggestion] = useState<Suggestion | null>(null);
   const { token, logout } = useAuth();
 
   useEffect(() => {
@@ -53,12 +59,47 @@ export default function EmojiGenerator() {
     }
   };
 
+  const generateSuggestion = () => {
+    const randomIndex = Math.floor(Math.random() * AVAILABLE_ANIMALS.length);
+    return AVAILABLE_ANIMALS[randomIndex];
+  };
+
   const handleGenerate = async () => {
     if (!prompt.trim()) return;
     
     const normalizedPrompt = prompt.trim().toLowerCase();
     if (!AVAILABLE_ANIMALS.includes(normalizedPrompt)) {
-      alert('Please enter a valid animal name from the available list.');
+      const suggestedAnimal = generateSuggestion();
+      setIsLoading(true);
+      try {
+        // Generate a preview image for the suggestion
+        const response = await fetch(`${API_BASE_URL}/images/generate`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ prompt: suggestedAnimal })
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to generate suggestion image');
+        }
+
+        const data = await response.json();
+        setSuggestion({
+          animal: suggestedAnimal,
+          imageUrl: data.url
+        });
+      } catch (error) {
+        console.error('Error generating suggestion:', error);
+        setSuggestion({
+          animal: suggestedAnimal,
+          imageUrl: null
+        });
+      } finally {
+        setIsLoading(false);
+      }
       return;
     }
 
@@ -105,15 +146,27 @@ export default function EmojiGenerator() {
         throw new Error(errorData.detail || 'Failed to save image');
       }
 
-      const savedData = await saveResponse.json();
       await fetchImages();
       setPrompt('');
+      setSuggestion(null);
     } catch (error) {
       console.error('Error:', error);
       alert(error instanceof Error ? error.message : 'An error occurred');
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleAcceptSuggestion = async () => {
+    if (suggestion) {
+      setPrompt(suggestion.animal);
+      handleGenerate();
+    }
+  };
+
+  const handleRejectSuggestion = () => {
+    setSuggestion(null);
+    setPrompt('');
   };
 
   const handleLike = async (imageId: string) => {
@@ -155,7 +208,6 @@ export default function EmojiGenerator() {
         throw new Error('Failed to delete image');
       }
 
-      // Refresh the images list after successful deletion
       await fetchImages();
     } catch (error) {
       console.error('Error deleting image:', error);
@@ -192,6 +244,31 @@ export default function EmojiGenerator() {
             {isLoading ? 'Generating...' : 'Generate'}
           </Button>
         </div>
+
+        {suggestion && (
+          <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              No animal matches your search. How about a cute {suggestion.animal} instead?
+            </p>
+            {suggestion.imageUrl && (
+              <div className="mb-4">
+                <img 
+                  src={suggestion.imageUrl} 
+                  alt={suggestion.animal}
+                  className="w-48 h-48 object-cover rounded-lg mx-auto"
+                />
+              </div>
+            )}
+            <div className="flex justify-center gap-4">
+              <Button onClick={handleAcceptSuggestion} variant="default">
+                Use this animal
+              </Button>
+              <Button onClick={handleRejectSuggestion} variant="outline">
+                No, thanks
+              </Button>
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 justify-items-center">
           {images.map((image) => (
