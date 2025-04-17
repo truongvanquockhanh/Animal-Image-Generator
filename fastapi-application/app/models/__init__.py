@@ -4,5 +4,6 @@ from app.models.project import Project
 from app.models.bug import Bug
 from app.models.project_member import ProjectMember
 from app.models.note import Note
+from app.models.image import Image
 
-__all__ = ["User", "Project", "Bug", "ProjectMember", "BaseModel", "Note"]
+__all__ = ["User", "Project", "Bug", "ProjectMember", "BaseModel", "Note", "Image"]

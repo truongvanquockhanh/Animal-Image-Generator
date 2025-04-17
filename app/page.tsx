@@ -55,8 +55,16 @@ export default function EmojiGenerator() {
 
   const handleGenerate = async () => {
     if (!prompt.trim()) return;
+    
+    const normalizedPrompt = prompt.trim().toLowerCase();
+    if (!AVAILABLE_ANIMALS.includes(normalizedPrompt)) {
+      alert('Please enter a valid animal name from the available list.');
+      return;
+    }
+
     setIsLoading(true);
     try {
+      // Generate image
       const response = await fetch(`${API_BASE_URL}/images/generate`, {
         method: 'POST',
         headers: {
@@ -65,10 +73,15 @@ export default function EmojiGenerator() {
         },
         body: JSON.stringify({ prompt })
       });
-      if (!response.ok) throw new Error('Failed to generate image');
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || 'Failed to generate image');
+      }
+
       const data = await response.json();
       
-      // Save the image directly after generation
+      // Save the image
       const saveResponse = await fetch(`${API_BASE_URL}/images`, {
         method: 'POST',
         headers: {
@@ -76,17 +89,28 @@ export default function EmojiGenerator() {
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
+          id: data.id,
           prompt: data.prompt,
           url: data.url,
-          original_input: prompt,
-          is_suggested: false
+          likes: 0,
+          created_at: new Date().toISOString(),
+          is_suggested: false,
+          suggested_animal: null,
+          original_input: prompt
         })
       });
-      if (!saveResponse.ok) throw new Error('Failed to save image');
+
+      if (!saveResponse.ok) {
+        const errorData = await saveResponse.json().catch(() => ({}));
+        throw new Error(errorData.detail || 'Failed to save image');
+      }
+
+      const savedData = await saveResponse.json();
       await fetchImages();
       setPrompt('');
     } catch (error) {
       console.error('Error:', error);
+      alert(error instanceof Error ? error.message : 'An error occurred');
     } finally {
       setIsLoading(false);
     }

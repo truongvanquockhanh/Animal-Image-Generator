@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from app.database import engine, Base
-from app.api.routes import image, auth, google_auth  # Import google_auth router
+from app.api.routes import images, auth, google_auth  # Import images router
 from fastapi.middleware.cors import CORSMiddleware
 import os
 from dotenv import load_dotenv
@@ -32,7 +32,7 @@ app.add_middleware(
 )
 
 # Include routers
-app.include_router(image.router, prefix="/images", tags=["images"])
+app.include_router(images.router, prefix="/images", tags=["images"])
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(google_auth.router, prefix="/auth", tags=["auth"])  # Add Google auth routes
 
