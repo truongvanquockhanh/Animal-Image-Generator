@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAuth } from '@/contexts/auth-context';
-import { UserCircle } from 'lucide-react';
+import { UserCircle, Sparkles } from 'lucide-react';
 import { Sidebar } from '@/components/ui/sidebar';
 import { API_BASE_URL } from '@/lib/constants';
 import { ImageCard } from '@/components/image-card';
@@ -36,7 +36,7 @@ export default function EmojiGenerator() {
   const [prompt, setPrompt] = useState('');
   const [images, setImages] = useState<Image[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [suggestion, setSuggestion] = useState<Suggestion | null>(null);
   const { token, logout } = useAuth();
 
@@ -249,61 +249,99 @@ export default function EmojiGenerator() {
   };
 
   return (
-    <div className="container mx-auto p-4">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Animal Image Generator</h1>
-        <div className="flex gap-2">
+    <div className="max-w-7xl mx-auto px-8">
+      <div className="flex justify-between items-center mb-8 py-4 border-b">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-xl bg-gradient-to-br from-violet-500 via-purple-500 to-indigo-500">
+            <Sparkles className="h-8 w-8 text-white" />
+          </div>
+          <div>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
+              Animal Image Generator
+            </h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              Create unique animal images with AI
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-4">
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => setIsSidebarOpen(true)}
+            onClick={() => setIsSidebarOpen(false)}
+            className="hover:bg-gray-100 dark:hover:bg-gray-800"
           >
             <UserCircle className="h-6 w-6" />
           </Button>
-          <Button onClick={logout}>Logout</Button>
+          <Button 
+            onClick={logout}
+            className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white font-medium px-6"
+          >
+            Logout
+          </Button>
         </div>
       </div>
 
       <div className="flex flex-col gap-4">
-        <div className="flex gap-2">
+        <div className="flex gap-2 max-w-3xl mx-auto w-full">
           <Input
             type="text"
             placeholder="Enter an animal name..."
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
-            className="flex-grow"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                if (suggestion) {
+                  handleAcceptSuggestion();
+                } else if (!isLoading) {
+                  handleGenerate();
+                }
+              }
+            }}
+            className="flex-grow h-12 text-lg rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm"
           />
-          <Button onClick={handleGenerate} disabled={isLoading}>
+          <Button 
+            onClick={handleGenerate} 
+            disabled={isLoading}
+            className="h-12 px-8 rounded-xl bg-black hover:bg-gray-800 text-white font-medium text-lg transition-colors"
+          >
             {isLoading ? 'Generating...' : 'Generate'}
           </Button>
         </div>
 
         {suggestion && (
-          <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+          <div className="max-w-3xl mx-auto w-full bg-gray-50 dark:bg-gray-800/50 backdrop-blur-sm p-6 rounded-2xl shadow-sm">
+            <p className="text-gray-600 dark:text-gray-300 text-lg mb-6">
               No animal matches your search. How about a cute {suggestion.animal} instead?
             </p>
             {suggestion.imageUrl && (
-              <div className="mb-4">
+              <div className="mb-6 flex justify-center">
                 <img 
                   src={suggestion.imageUrl} 
                   alt={suggestion.animal}
-                  className="w-48 h-48 object-cover rounded-lg mx-auto"
+                  className="w-64 h-64 object-contain bg-white rounded-xl shadow-md"
                 />
               </div>
             )}
             <div className="flex justify-center gap-4">
-              <Button onClick={handleAcceptSuggestion} variant="default">
+              <Button 
+                onClick={handleAcceptSuggestion} 
+                className="bg-black hover:bg-gray-800 text-white px-6 py-2 rounded-xl font-medium transition-colors"
+              >
                 Use this animal
               </Button>
-              <Button onClick={handleRejectSuggestion} variant="outline">
+              <Button 
+                onClick={handleRejectSuggestion} 
+                variant="outline"
+                className="bg-white hover:bg-gray-50 text-gray-800 px-6 py-2 rounded-xl font-medium border border-gray-200 transition-colors"
+              >
                 No, thanks
               </Button>
             </div>
           </div>
         )}
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 justify-items-center">
+        <div className="grid grid-cols-4 gap-12 justify-items-center mt-8">
           {images.map((image) => (
             <ImageCard
               key={image.id}
@@ -321,8 +359,18 @@ export default function EmojiGenerator() {
 
       <Sidebar
         isOpen={isSidebarOpen}
-        onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
+        onToggle={() => setIsSidebarOpen(false)}
       />
+
+      {!isSidebarOpen && (
+        <Button
+          onClick={() => setIsSidebarOpen(true)}
+          className="fixed bottom-6 right-6 bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600 text-white shadow-lg"
+        >
+          <UserCircle className="w-5 h-5 mr-2" />
+          Show Profile
+        </Button>
+      )}
     </div>
   );
 }
