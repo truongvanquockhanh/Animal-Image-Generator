@@ -1,55 +1,70 @@
 "use client";
 
 import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { jwtDecode } from 'jwt-decode';
 
 interface AuthContextType {
   token: string | null;
+  username: string | null;
   login: (token: string) => void;
   logout: () => void;
   isAuthenticated: boolean;
 }
 
+interface DecodedToken {
+  username: string;
+}
+
 const AuthContext = createContext<AuthContextType>({
   token: null,
+  username: null,
   login: () => {},
   logout: () => {},
   isAuthenticated: false
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  // Initialize token state from localStorage
-  const [token, setToken] = useState<string | null>(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('auth_token');
-    }
-    return null;
-  });
+  const [token, setToken] = useState<string | null>(null);
+  const [username, setUsername] = useState<string | null>(null);
 
-  // Effect to sync token with localStorage
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const storedToken = localStorage.getItem('auth_token');
-      if (storedToken !== token) {
-        console.log('Syncing token from localStorage:', storedToken);
-        setToken(storedToken);
+      if (storedToken) {
+        try {
+          const decoded = jwtDecode<DecodedToken>(storedToken);
+          setToken(storedToken);
+          setUsername(decoded.username);
+        } catch (error) {
+          console.error("Failed to decode token from storage:", error);
+          localStorage.removeItem('auth_token');
+        }
       }
     }
   }, []);
 
   const login = (newToken: string) => {
-    localStorage.setItem('auth_token', newToken);
-    setToken(newToken);
+    try {
+      const decoded = jwtDecode<DecodedToken>(newToken);
+      localStorage.setItem('auth_token', newToken);
+      setToken(newToken);
+      setUsername(decoded.username);
+    } catch (error) {
+      console.error("Failed to decode new token:", error);
+    }
   };
 
   const logout = () => {
     localStorage.removeItem('auth_token');
     setToken(null);
+    setUsername(null);
     window.location.href = '/login';
   };
 
   return (
     <AuthContext.Provider value={{
       token,
+      username,
       login,
       logout,
       isAuthenticated: !!token

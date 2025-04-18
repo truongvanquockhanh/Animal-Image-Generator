@@ -35,7 +35,7 @@ const AVAILABLE_ANIMALS = [
 
 export default function EmojiGenerator() {
   const router = useRouter();
-  const { token, logout, isAuthenticated } = useAuth();
+  const { token, logout, isAuthenticated, username } = useAuth();
   const [prompt, setPrompt] = useState('');
   const [images, setImages] = useState<Image[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -257,19 +257,31 @@ export default function EmojiGenerator() {
   return (
     <div className="max-w-7xl mx-auto px-8">
       <div className="flex justify-between items-center mb-8 py-4 border-b">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-gradient-to-br from-violet-500 via-purple-500 to-indigo-500">
-            <Sparkles className="h-8 w-8 text-white" />
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-gradient-to-br from-violet-500 via-purple-500 to-indigo-500">
+              <Sparkles className="h-8 w-8 text-white" />
+            </div>
+            <div>
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                Animal Image Generator
+              </h1>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                Create unique animal images with AI
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
-              Animal Image Generator
-            </h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              Create unique animal images with AI
-            </p>
-          </div>
+
+          {/* Welcome Message */}
+          {username && (
+            <div className="border-l border-gray-200 dark:border-gray-700 pl-6">
+              <p className="text-xl font-medium text-gray-700 dark:text-gray-300">
+                Welcome, <span className="text-violet-600 dark:text-violet-400">{username}</span>!
+              </p>
+            </div>
+          )}
         </div>
+
         <div className="flex items-center gap-4">
           <Button
             variant="ghost"
