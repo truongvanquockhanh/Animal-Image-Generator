@@ -19,3 +19,10 @@ class SignupResponse(BaseModel):
     id: UUID
     username: str
     token: str
+
+class GoogleAuthRequest(BaseModel):
+    token: str
+
+class GoogleLoginResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"

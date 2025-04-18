@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/auth-context";
 import { toast } from "sonner";
 import { API_BASE_URL } from "@/lib/constants";
+import { GoogleLoginButton } from "./google-login-button";
 
 interface SignupResponse {
   id: string;
@@ -106,71 +107,86 @@ export function SignupForm() {
         <h1 className="text-3xl font-bold">Create an account</h1>
         <p className="text-gray-500">Enter your details to create your account</p>
       </div>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="space-y-2">
-          <label htmlFor="username" className="text-sm font-medium">
-            Username
-          </label>
-          <div className="relative">
-            <Input
-              id="username"
-              placeholder="Enter your username"
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
-              minLength={3}
-              className={usernameError ? "border-red-500" : ""}
-              disabled={isLoading}
-            />
-            {isCheckingUsername && (
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-500">
-                Checking...
-              </span>
+
+      <div className="space-y-4">
+        <GoogleLoginButton />
+        
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-white px-2 text-gray-500">Or continue with</span>
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <label htmlFor="username" className="text-sm font-medium">
+              Username
+            </label>
+            <div className="relative">
+              <Input
+                id="username"
+                placeholder="Enter your username"
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+                minLength={3}
+                className={usernameError ? "border-red-500" : ""}
+                disabled={isLoading}
+              />
+              {isCheckingUsername && (
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-500">
+                  Checking...
+                </span>
+              )}
+            </div>
+            {usernameError && (
+              <p className="text-sm text-red-500 mt-1">{usernameError}</p>
             )}
           </div>
-          {usernameError && (
-            <p className="text-sm text-red-500 mt-1">{usernameError}</p>
-          )}
-        </div>
-        <div className="space-y-2">
-          <label htmlFor="password" className="text-sm font-medium">
-            Password
-          </label>
-          <Input
-            id="password"
-            placeholder="Enter your password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            minLength={6}
-            disabled={isLoading}
-          />
-          <p className="text-xs text-gray-500">Must be at least 6 characters</p>
-        </div>
-        <div className="space-y-2">
-          <label htmlFor="confirmPassword" className="text-sm font-medium">
-            Confirm Password
-          </label>
-          <Input
-            id="confirmPassword"
-            placeholder="Confirm your password"
-            type="password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            required
-            disabled={isLoading}
-          />
-        </div>
-        <Button
-          type="submit"
-          className="w-full"
-          disabled={isLoading || isCheckingUsername || Boolean(usernameError)}
-        >
-          {isLoading ? "Signing up..." : "Sign up"}
-        </Button>
-      </form>
+          <div className="space-y-2">
+            <label htmlFor="password" className="text-sm font-medium">
+              Password
+            </label>
+            <Input
+              id="password"
+              placeholder="Enter your password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              minLength={6}
+              disabled={isLoading}
+            />
+            <p className="text-xs text-gray-500">Must be at least 6 characters</p>
+          </div>
+          <div className="space-y-2">
+            <label htmlFor="confirmPassword" className="text-sm font-medium">
+              Confirm Password
+            </label>
+            <Input
+              id="confirmPassword"
+              placeholder="Confirm your password"
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+              disabled={isLoading}
+            />
+          </div>
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={isLoading || isCheckingUsername || Boolean(usernameError)}
+          >
+            {isLoading ? "Signing up..." : "Sign up"}
+          </Button>
+        </form>
+      </div>
+
       <div className="text-center text-sm">
         <a href="/login" className="text-blue-600 hover:underline">
           Already have an account? Log in
