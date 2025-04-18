@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from "@/contexts/auth-context";
-import { GoogleLogin, CredentialResponse } from "@react-oauth/google";
+import { GoogleLogin } from "@react-oauth/google";
 import { toast } from "sonner";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
@@ -15,54 +15,49 @@ interface GoogleLoginResponse {
 export function GoogleLoginButton() {
   const { login } = useAuth();
 
-  const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
+  const handleGoogleSuccess = async (credentialResponse: any) => {
     if (!credentialResponse.credential) {
       toast.error('Google login failed: No credential received');
       return;
     }
 
     try {
-      // Send the ID token (credential) to our backend
+      // Send the ID token to our backend
       const apiResponse = await fetch(`${API_BASE_URL}/auth/google`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        // Send the ID token received from Google
-        body: JSON.stringify({ token: credentialResponse.credential }), 
+        body: JSON.stringify({ token: credentialResponse.credential }),
       });
 
-      const data: GoogleLoginResponse = await apiResponse.json();
-
       if (!apiResponse.ok) {
-        throw new Error(data.detail || 'Google login failed');
+        const errorData = await apiResponse.json();
+        throw new Error(errorData.detail || 'Google login failed');
       }
 
-      // Login with the access_token from our backend
+      const data: GoogleLoginResponse = await apiResponse.json();
       login(data.access_token);
       toast.success('Successfully logged in with Google!');
-      // Redirect or update UI
-      window.location.href = '/'; 
+      window.location.href = '/';
     } catch (error) {
       console.error('Google login error:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to login with Google');
     }
   };
 
-  const handleGoogleError = () => {
-    toast.error('Google login failed');
-  };
-
   return (
-    <div className="w-full">
+    <div className="w-full flex justify-center">
       <GoogleLogin
         onSuccess={handleGoogleSuccess}
-        onError={handleGoogleError}
-        useOneTap // Optional: Enables One Tap sign-in experience
-        width="100%" // Make the button full width
+        onError={() => {
+          toast.error('Google login failed');
+        }}
         theme="outline"
+        size="large"
+        width="300"
+        text="continue_with"
         shape="rectangular"
-        logo_alignment="left"
       />
     </div>
   );
