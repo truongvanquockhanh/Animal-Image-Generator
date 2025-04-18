@@ -3,20 +3,31 @@ import type { NextRequest } from 'next/server'
 
 // This function can be marked `async` if using `await` inside
 export function middleware(request: NextRequest) {
-  const token = request.cookies.get('token')?.value || '';
-  const isLoginPage = request.nextUrl.pathname === '/login';
+  // console.log("middleware is running");
+  
+  // // Check both cookie and authorization header
+  // const authToken = request.cookies.get('auth_token')?.value || 
+  //                  request.headers.get('authorization')?.split(' ')[1];
+                   
+  // console.log('Auth token in middleware:', authToken);
+  
+  // const isLoginPage = request.nextUrl.pathname === '/login';
+  // const isSignupPage = request.nextUrl.pathname === '/signup';
+  // const isPublicPath = isLoginPage || isSignupPage;
 
-  // If trying to access login page and has token, redirect to home
-  if (isLoginPage && token) {
-    return NextResponse.redirect(new URL('/', request.url));
-  }
+  // // If has token but trying to access login/signup
+  // if (authToken && isPublicPath) {
+  //   console.log('Has token, redirecting to home');
+  //   return NextResponse.redirect(new URL('/', request.url));
+  // }
 
-  // If no token and not on login page, redirect to login
-  if (!token && !isLoginPage) {
-    return NextResponse.redirect(new URL('/login', request.url));
-  }
+  // // If no token and trying to access protected route
+  // if (!authToken && !isPublicPath) {
+  //   console.log('No token, redirecting to login');
+  //   return NextResponse.redirect(new URL('/login', request.url));
+  // }
 
-  return NextResponse.next();
+  // return NextResponse.next();
 }
 
 // See "Matching Paths" below to learn more

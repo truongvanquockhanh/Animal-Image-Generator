@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/auth-context";
 import { toast } from "sonner";
 import { API_BASE_URL } from "@/lib/constants";
-import { useRouter } from "next/navigation";
 
 interface LoginResponse {
   id: string;
@@ -21,7 +20,6 @@ export function LoginForm() {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
-  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,7 +45,7 @@ export function LoginForm() {
 
       login(data.token);
       toast.success("Successfully logged in!");
-      router.push("/");
+
     } catch (error) {
       console.error("Login error:", error);
       toast.error(error instanceof Error ? error.message : "Failed to login");

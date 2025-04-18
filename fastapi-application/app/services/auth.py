@@ -6,6 +6,11 @@ from app.core.security import verify_password
 from app.core.security import create_access_token
 from fastapi import HTTPException
 
+def check_username_exists(db: Session, username: str) -> bool:
+    """Check if a username already exists in the database."""
+    db_user = db.query(User).filter(User.username == username).first()
+    return db_user is not None
+
 def check_user(db: Session, user: LogInRequest):
   db_user = db.query(User).filter(User.username == user.username).first()
   if not db_user:
@@ -29,6 +34,10 @@ def create_token(db: Session, user: LogInRequest):
   return
 
 def sign_up(db: Session, user: SignupRequest):
+    # Check if username exists before attempting to create
+    if check_username_exists(db, user.username):
+        raise HTTPException(status_code=409, detail="Username is already taken")
+        
     password = hash_password(user.password)
     db_user = User(username=user.username, password=password)
     db.add(db_user)

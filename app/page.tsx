@@ -8,6 +8,7 @@ import { UserCircle, Sparkles } from 'lucide-react';
 import { Sidebar } from '@/components/ui/sidebar';
 import { API_BASE_URL } from '@/lib/constants';
 import { ImageCard } from '@/components/image-card';
+import { useRouter } from 'next/navigation';
 
 interface Image {
   id: string;
@@ -33,16 +34,21 @@ const AVAILABLE_ANIMALS = [
 ]
 
 export default function EmojiGenerator() {
+  const router = useRouter();
+  const { token, logout, isAuthenticated } = useAuth();
   const [prompt, setPrompt] = useState('');
   const [images, setImages] = useState<Image[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [suggestion, setSuggestion] = useState<Suggestion | null>(null);
-  const { token, logout } = useAuth();
 
   useEffect(() => {
+    if (!isAuthenticated) {
+      router.push('/login');
+      return;
+    }
     fetchImages();
-  }, []);
+  }, [isAuthenticated, token]);
 
   const fetchImages = async () => {
     try {

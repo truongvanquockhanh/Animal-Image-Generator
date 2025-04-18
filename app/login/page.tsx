@@ -11,7 +11,9 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (isAuthenticated) {
+      console.log("f1 isAuthenticated", isAuthenticated);
       router.push("/");
+      console.log("f2 isAuthenticated", isAuthenticated);
     }
   }, [isAuthenticated, router]);
 
