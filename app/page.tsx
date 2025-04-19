@@ -9,6 +9,7 @@ import { Sidebar } from '@/components/ui/sidebar';
 import { API_BASE_URL } from '@/lib/constants';
 import { ImageCard } from '@/components/image-card';
 import { useRouter } from 'next/navigation';
+import { v4 as uuidv4 } from 'uuid';
 
 interface Image {
   id: string;
@@ -175,7 +176,7 @@ export default function EmojiGenerator() {
             'Authorization': `Bearer ${token}`
           },
           body: JSON.stringify({
-            id: crypto.randomUUID(), // Generate a unique ID
+            id: uuidv4(), // Using uuid v4 instead of crypto.randomUUID
             prompt: suggestion.animal,
             url: suggestion.imageUrl,
             likes: 0,

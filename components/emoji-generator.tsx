@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { ImageCard } from './image-card';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
-import { toast } from 'sonner';
 
 interface Image {
   id: string;
@@ -16,7 +15,7 @@ export function EmojiGenerator() {
   const [prompt, setPrompt] = useState('');
   const [images, setImages] = useState<Image[]>([]);
   const [loading, setLoading] = useState(false);
-  const [fetchingImages, setFetchingImages] = useState(false);
+  const [fetchingImages] = useState(false);
 
   useEffect(() => {
     fetch('http://localhost:8000/images')
@@ -46,7 +45,7 @@ export function EmojiGenerator() {
     }
   };
 
-  const handleLike = async (imageId: string) => {
+  const handleLike = async (imageId: string): Promise<number> => {
     const updatedImages = images.map(img => {
       if (img.id === imageId) {
         return { ...img };
@@ -54,6 +53,7 @@ export function EmojiGenerator() {
       return img;
     });
     setImages(updatedImages);
+    return 0; // Return a number to satisfy the type
   };
 
   const handleDelete = async (imageId: string) => {
